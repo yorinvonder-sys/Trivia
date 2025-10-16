@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trivia Battle - Geschiedenis</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh; display: flex; justify-content: center; align-items: center; color: white;
+        }
+        .container { width: 90%; max-width: 1100px; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 20px; padding: 30px; box-shadow: 0 25px 45px rgba(0,0,0,0.2); position: relative; }
+        h1 { text-align: center; font-size: 2.5em; margin-bottom: 30px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); animation: glow 2s ease-in-out infinite alternate; }
+        @keyframes glow { from { text-shadow: 2px 2px 4px rgba(0,0,0,0.3);} to { text-shadow: 2px 2px 20px rgba(255,255,255,0.5);} }
+        .lobby-screen, .game-screen, .results-screen { display: none; }
+        .lobby-screen.active, .game-screen.active, .results-screen.active { display: block; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity:0; transform: translateY(20px);} to { opacity:1; transform: translateY(0);} }
+        .player-count-selector { text-align: center; margin-bottom: 20px; }
+        .player-count-selector h2 { margin-bottom: 10px; color: #ffd700; }
+        .player-count-buttons { display: flex; justify-content: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+        .count-btn { background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); color: white; width: 60px; height: 60px; border-radius: 50%; font-size: 24px; font-weight: bold; cursor: pointer; transition: all 0.3s; }
+        .count-btn:hover { background: rgba(255,255,255,0.3); transform: scale(1.1); }
+        .count-btn.selected { background: linear-gradient(45deg, #4ecdc4, #44a08d); border-color: #4ecdc4; transform: scale(1.1); }
+        .topic-selector { margin: 20px 0 25px; }
+        .topic-selector h2 { text-align: center; color: #ffd700; margin-bottom: 12px; }
+        .topic-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+        .topic-chip { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 14px; background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.25); cursor: pointer; transition: 0.25s; }
+        .topic-chip input { width: 20px; height: 20px; accent-color: #44a08d; cursor: pointer; }
+        .topic-chip span { font-weight: 600; }
+        .topic-chip:hover { background: rgba(255,255,255,0.25); transform: translateY(-2px); }
+        .topic-chip.active { background: linear-gradient(45deg, rgba(78,205,196,0.35), rgba(68,160,141,0.35)); border-color: #4ecdc4; box-shadow: 0 4px 12px rgba(78,205,196,0.25); }
+        .player-setup { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 20px; }
+        .player-card { background: rgba(255,255,255,0.2); padding: 20px; border-radius: 15px; transition: all 0.3s; }
+        .player-card.inactive { opacity: 0.3; pointer-events: none; }
+        .player-card h3 { margin-bottom: 15px; color: #ffd700; display: flex; align-items: center; gap: 10px; }
+        .player-icon { font-size: 1.5em; }
+        .icon-selector { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; justify-content: center; }
+        .icon-btn { background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3); width: 45px; height: 45px; border-radius: 10px; font-size: 1.5em; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; }
+        .icon-btn:hover:not(.selected) { background: rgba(255,255,255,0.2); transform: scale(1.1); }
+        .icon-btn.selected { background: linear-gradient(45deg, #4ecdc4, #44a08d); border-color: #4ecdc4; transform: scale(1.15); box-shadow: 0 4px 10px rgba(78,205,196,0.4); }
+        input[type="text"] { width: 100%; padding: 12px; border: none; border-radius: 8px; background: rgba(255,255,255,0.9); color: #333; font-size: 16px; margin-bottom: 10px; }
+        .btn { background: linear-gradient(45deg, #ff6b6b, #ee5a24); color: white; border: none; padding: 15px 40px; border-radius: 50px; font-size: 18px; font-weight: bold; cursor: pointer; transition: all 0.3s; display: inline-block; margin: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+        .btn:active { transform: translateY(0); }
+        .btn-start { background: linear-gradient(45deg, #4ecdc4, #44a08d); display: block; margin: 20px auto 0; }
+        .question-container { background: rgba(255,255,255,0.15); padding: 30px; border-radius: 15px; margin-bottom: 30px; text-align: center; }
+        .question-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .category-badge { background: rgba(255,255,255,0.3); padding: 8px 20px; border-radius: 20px; font-size: 14px; font-weight: bold; }
+        .question-number { font-size: 1.2em; color: #ffd700; }
+        .question-text { font-size: 1.4em; line-height: 1.5; margin-bottom: 30px; }
+        .answers-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
+        .answer-btn { background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); padding: 20px; border-radius: 12px; cursor: pointer; transition: all 0.3s; text-align: left; color: white; font-size: 16px; }
+        .answer-btn:hover:not(:disabled) { background: rgba(255,255,255,0.3); transform: scale(1.02); }
+        .answer-btn:disabled { cursor: not-allowed; opacity: 0.6; }
+        .answer-btn.correct { background: rgba(76,175,80,0.8); border-color: #4caf50; animation: pulse 0.5s; }
+        .answer-btn.incorrect { background: rgba(244,67,54,0.8); border-color: #f44336; animation: shake 0.5s; }
+        @keyframes pulse { 0%{transform:scale(1);} 50%{transform:scale(1.05);} 100%{transform:scale(1);} }
+        @keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-10px);} 75%{transform:translateX(10px);} }
+        .current-player { text-align: center; font-size: 1.3em; margin-bottom: 20px; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 10px; animation: slideIn 0.5s; transition: background 0.5s ease; }
+        @keyframes slideIn { from { opacity:0; transform: translateX(-20px);} to { opacity:1; transform: translateX(0);} }
+        .scoreboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 30px; }
+        .score-card { background: rgba(255,255,255,0.2); padding: 15px; border-radius: 12px; text-align: center; transition: all 0.3s; }
+        .score-card.current { transform: scale(1.05); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .score-card.current h4 { color: white; }
+        .score-card h4 { color: #ffd700; margin-bottom: 10px; font-size: 0.95em; }
+        .score { font-size: 2em; font-weight: bold; }
+        .timer { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); padding: 10px 20px; border-radius: 25px; font-size: 1.2em; font-weight: bold; }
+        .results-container { text-align: center; }
+        .winner-announcement { font-size: 2em; margin: 30px 0; color: #ffd700; }
+        .podium { display: flex; justify-content: center; align-items: flex-end; gap: 20px; margin: 40px 0; min-height: 250px; }
+        .podium-place { background: rgba(255,255,255,0.2); padding: 20px; border-radius: 15px 15px 0 0; min-width: 150px; transition: all 0.5s; animation: slideUp 0.8s ease-out; }
+        @keyframes slideUp { from { opacity:0; transform: translateY(50px);} to { opacity:1; transform: translateY(0);} }
+        .podium-place.first { background: linear-gradient(135deg, #ffd700, #ffed4e); color:#333; height:200px; order:2; }
+        .podium-place.second { background: linear-gradient(135deg, #c0c0c0, #e8e8e8); color:#333; height:160px; order:1; }
+        .podium-place.third { background: linear-gradient(135deg, #cd7f32, #e4a853); color:#333; height:120px; order:3; }
+        .podium-place.other { background: rgba(255,255,255,0.15); height:80px; order:4; }
+        .place-number { font-size: 2em; font-weight: bold; margin-bottom: 10px; }
+        .place-name { font-weight: bold; margin-bottom: 10px; }
+        .place-score { font-size: 1.5em; }
+        .trophy { font-size: 2em; margin-bottom: 10px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 30px 0; }
+        .stat-card { background: rgba(255,255,255,0.15); padding: 15px; border-radius: 10px; }
+        .stat-card h5 { color: #ffd700; margin-bottom: 10px; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: linear-gradient(135deg, #764ba2 0%, #667eea 100%); padding: 40px; border-radius: 20px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3); animation: zoomIn 0.5s; }
+        @keyframes zoomIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal-content h2 { font-size: 2.5em; color: #ffd700; text-shadow: 2px 2px 10px rgba(0,0,0,0.4); }
+        .drag-drop-container { display: flex; justify-content: space-around; align-items: flex-start; gap: 20px; margin-top: 20px; flex-wrap: wrap; }
+        .drag-items, .drop-targets { display: flex; flex-direction: column; gap: 10px; width: 45%; min-width: 250px; }
+        .drag-item { background: rgba(255,255,255,0.3); padding: 15px; border-radius: 10px; cursor: grab; transition: transform 0.2s, background 0.2s; user-select: none; }
+        .drag-item.dragging { opacity: 0.5; transform: scale(1.05); background: #4ecdc4; }
+        .drop-target { background: rgba(0,0,0,0.2); min-height: 60px; padding: 10px; border: 2px dashed rgba(255,255,255,0.4); border-radius: 10px; display: flex; flex-direction: column; justify-content: center; }
+        .drop-target.over { background: rgba(255,255,255,0.2); border-color: #ffd700; }
+        .drop-target .drag-item { cursor: default; }
+        .drop-target-label { font-size: 0.9em; color: rgba(255,255,255,0.7); margin-bottom: 5px; text-align: left; }
+        .order-container { display: flex; flex-direction: column; gap: 10px; max-width: 500px; margin: 20px auto; }
+        .order-item { background: rgba(255,255,255,0.3); padding: 15px; border-radius: 10px; cursor: grab; user-select: none; border: 2px solid transparent; transition: all 0.3s; display: flex; align-items: center; gap: 15px; }
+        .order-item::before { content: '☰'; font-size: 1.2em; color: rgba(255,255,255,0.6); }
+        .fill-in-container { font-size: 1.3em; margin: 20px 0; }
+        .fill-in-blank { display: inline-block; width: 150px; min-height: 40px; background: rgba(0,0,0,0.2); border-radius: 8px; border: 2px dashed rgba(255,255,255,0.4); vertical-align: middle; padding: 5px; }
+        .fill-in-options { display: flex; justify-content: center; gap: 15px; margin-top: 20px; flex-wrap: wrap; min-height: 60px; }
+        .question-image-container { margin-bottom: 20px; }
+        .question-image-container img { max-width: 100%; max-height: 300px; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
+        
+        /* Player Colors */
+        .current-player.player-1, .score-card.current.player-1 { background: linear-gradient(45deg, #00BFFF, #1E90FF); }
+        .current-player.player-2, .score-card.current.player-2 { background: linear-gradient(45deg, #FF69B4, #FF1493); }
+        .current-player.player-3, .score-card.current.player-3 { background: linear-gradient(45deg, #32CD32, #2E8B57); }
+        .current-player.player-4, .score-card.current.player-4 { background: linear-gradient(45deg, #FFA500, #FF8C00); }
+
+        @media (max-width: 768px) {
+            .podium { flex-direction: column; align-items: center; }
+            .podium-place { width: 80%; height: auto !important; padding: 15px; margin: 10px 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="modal" class="modal-overlay">
+            <div class="modal-content">
+                <h2 id="modalText"></h2>
+            </div>
+        </div>
+
+        <h1>🎯 Trivia Battle: Geschiedenis 🎯</h1>
+
+        <!-- Lobby Screen -->
+        <div class="lobby-screen active" id="lobbyScreen">
+            <div class="player-count-selector">
+                <h2>Hoeveel spelers? (2-4)</h2>
+                <div class="player-count-buttons">
+                    <button class="count-btn selected" onclick="setPlayerCount(2, this)">2</button>
+                    <button class="count-btn" onclick="setPlayerCount(3, this)">3</button>
+                    <button class="count-btn" onclick="setPlayerCount(4, this)">4</button>
+                </div>
+            </div>
+            <div class="year-selector" id="yearSelector">
+                <h2 style="text-align:center;color:#ffd700;margin-bottom:10px;">Kies jaarlaag</h2>
+                <div class="player-count-buttons" style="gap:10px;">
+                    <label class="topic-chip active" style="padding:10px 14px;">
+                        <input type="radio" name="year" value="Mavo 3" checked onchange="changeYear(this.value)" />
+                        <span>Mavo 3</span>
+                    </label>
+                    <label class="topic-chip" style="padding:10px 14px;">
+                        <input type="radio" name="year" value="Mavo 4" onchange="changeYear(this.value)" />
+                        <span>Mavo 4</span>
+                    </label>
+                    <label class="topic-chip" style="padding:10px 14px;">
+                        <input type="radio" name="year" value="Havo 3" onchange="changeYear(this.value)" />
+                        <span>Havo 3</span>
+                    </label>
+                    <label class="topic-chip" style="padding:10px 14px;">
+                        <input type="radio" name="year" value="VWO 3" onchange="changeYear(this.value)" />
+                        <span>VWO 3</span>
+                    </label>
+                </div>
+            </div>
+            <div class="topic-selector">
+                <h2 style="text-align:center;color:#ffd700;margin-bottom:10px;">Kies onderwerpen</h2>
+                <div class="topic-grid" id="topicGrid"></div>
+            </div>
+            <div class="player-setup">
+                <div class="player-card" data-player="1">
+                    <h3><span class="player-icon" id="player1Icon">🎮</span> Speler 1</h3>
+                    <div class="icon-selector">
+                        <button class="icon-btn selected" onclick="selectIcon(1, '🎮', this)">🎮</button><button class="icon-btn" onclick="selectIcon(1, '🎯', this)">🎯</button><button class="icon-btn" onclick="selectIcon(1, '🏆', this)">🏆</button><button class="icon-btn" onclick="selectIcon(1, '⭐', this)">⭐</button><button class="icon-btn" onclick="selectIcon(1, '🚀', this)">🚀</button><button class="icon-btn" onclick="selectIcon(1, '⚡', this)">⚡</button><button class="icon-btn" onclick="selectIcon(1, '🔥', this)">🔥</button><button class="icon-btn" onclick="selectIcon(1, '💎', this)">💎</button>
+                    </div>
+                    <input type="text" id="player1Name" placeholder="Voer naam in..." maxlength="20" />
+                </div>
+                <div class="player-card" data-player="2">
+                    <h3><span class="player-icon" id="player2Icon">🎯</span> Speler 2</h3>
+                    <div class="icon-selector">
+                        <button class="icon-btn" onclick="selectIcon(2, '🎮', this)">🎮</button><button class="icon-btn selected" onclick="selectIcon(2, '🎯', this)">🎯</button><button class="icon-btn" onclick="selectIcon(2, '🏆', this)">🏆</button><button class="icon-btn" onclick="selectIcon(2, '⭐', this)">⭐</button><button class="icon-btn" onclick="selectIcon(2, '🚀', this)">🚀</button><button class="icon-btn" onclick="selectIcon(2, '⚡', this)">⚡</button><button class="icon-btn" onclick="selectIcon(2, '🔥', this)">🔥</button><button class="icon-btn" onclick="selectIcon(2, '💎', this)">💎</button>
+                    </div>
+                    <input type="text" id="player2Name" placeholder="Voer naam in..." maxlength="20" />
+                </div>
+                <div class="player-card inactive" data-player="3">
+                    <h3><span class="player-icon" id="player3Icon">🏆</span> Speler 3</h3>
+                    <div class="icon-selector">
+                        <button class="icon-btn" onclick="selectIcon(3, '🎮', this)">🎮</button><button class="icon-btn" onclick="selectIcon(3, '🎯', this)">🎯</button><button class="icon-btn selected" onclick="selectIcon(3, '🏆', this)">🏆</button><button class="icon-btn" onclick="selectIcon(3, '⭐', this)">⭐</button><button class="icon-btn" onclick="selectIcon(3, '🚀', this)">🚀</button><button class="icon-btn" onclick="selectIcon(3, '⚡', this)">⚡</button><button class="icon-btn" onclick="selectIcon(3, '🔥', this)">🔥</button><button class="icon-btn" onclick="selectIcon(3, '💎', this)">💎</button>
+                    </div>
+                    <input type="text" id="player3Name" placeholder="Voer naam in..." maxlength="20" />
+                </div>
+                <div class="player-card inactive" data-player="4">
+                    <h3><span class="player-icon" id="player4Icon">⭐</span> Speler 4</h3>
+                    <div class="icon-selector">
+                        <button class="icon-btn" onclick="selectIcon(4, '🎮', this)">🎮</button><button class="icon-btn" onclick="selectIcon(4, '🎯', this)">🎯</button><button class="icon-btn" onclick="selectIcon(4, '🏆', this)">🏆</button><button class="icon-btn selected" onclick="selectIcon(4, '⭐', this)">⭐</button><button class="icon-btn" onclick="selectIcon(4, '🚀', this)">🚀</button><button class="icon-btn" onclick="selectIcon(4, '⚡', this)">⚡</button><button class="icon-btn" onclick="selectIcon(4, '🔥', this)">🔥</button><button class="icon-btn" onclick="selectIcon(4, '💎', this)">💎</button>
+                    </div>
+                    <input type="text" id="player4Name" placeholder="Voer naam in..." maxlength="20" />
+                </div>
+            </div>
+            <button class="btn btn-start" onclick="startGame()">Start het Spel!</button>
+        </div>
+
+        <!-- Game Screen -->
+        <div class="game-screen" id="gameScreen">
+            <div class="timer" id="timer">⏱️ 15</div>
+            <div class="current-player" id="currentPlayer"></div>
+            <div class="question-container">
+                <div class="question-header">
+                    <span class="category-badge" id="categoryBadge"></span>
+                    <span class="question-number" id="questionNumber"></span>
+                </div>
+                <div class="question-image-container" id="questionImageContainer"></div>
+                <div class="question-text" id="questionText"></div>
+                <div class="fill-in-container" id="fillInContainer"></div>
+                <div class="answers-grid" id="answersGrid"></div>
+                <div class="drag-drop-container" id="dragDropContainer">
+                    <div class="drag-items" id="dragItems"></div>
+                    <div class="drop-targets" id="dropTargets"></div>
+                </div>
+                <div class="order-container" id="orderContainer"></div>
+                <div class="fill-in-options" id="fillInOptions"></div>
+                <button class="btn" id="checkAnswerBtn" style="display: none; margin-top: 20px;">Controleer Antwoord</button>
+            </div>
+            <div class="scoreboard" id="scoreboard"></div>
+        </div>
+
+        <!-- Results Screen -->
+        <div class="results-screen" id="resultsScreen">
+            <div class="results-container">
+                <div class="winner-announcement" id="winnerAnnouncement"></div>
+                <div class="podium" id="podium"></div>
+                <div class="stats-grid" id="statsGrid"></div>
+                <button class="btn" onclick="resetGame()">Nieuw Spel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let playerCount = 2, players = {}, playerOrder = [], currentPlayerIndex = 0, currentQuestionIndex = 0;
+        let timer = null, timeLeft = 15, questionsPerPlayer = 5, roundsCompleted = 0;
+        let gameQuestions = [], currentYear = 'Mavo 3', draggedItem = null;
+
+        const topicsByYear = {
+            'Mavo 4': ['H1: Staatsinrichting', 'H2: Eerste Wereldoorlog', 'H3: Interbellum', 'H4: Tweede Wereldoorlog', 'H5: Wereld na 1945'],
+            'Mavo 3': ['H1: Nederlands-Indië', 'H2: Industrialisatie', 'H4: Nederland na 1945', 'H5: Koude Oorlog', 'H6: Israël-Palestina'],
+            'Havo 3': ['H3: De Eerste Wereldoorlog', 'H4: Rusland wordt communistisch', 'H5: Tussen de wereldoorlogen', 'H6: De Tweede Wereldoorlog', 'H7: De Koude Oorlog'],
+            'VWO 3': ['H3: De Eerste Wereldoorlog', 'H4: Rusland kleurt rood', 'H5: Het Interbellum', 'H6: De Tweede Wereldoorlog', 'H7: De wereld onder hoogspanning, 1945-1991']
+        };
+
+        const questions = [
+            // Mavo 4 - H1: Staatsinrichting
+            { type: "mc", category: "H1: Staatsinrichting", question: "Wat is de Trias Politica?", answers: ["De scheiding der machten", "De drie grootste partijen", "De drie taken van de koning", "De Eerste en Tweede Kamer"], correct: 0, bonus: true },
+            { type: "odd-one-out", category: "H1: Staatsinrichting", question: "Welke van deze hoort NIET bij de 'uitvoerende macht'?", options: ["Ministers", "De Koning", "Ambtenaren", "Rechters"], correct: 3 },
+            { type: "mc", category: "H1: Staatsinrichting", question: "Hoeveel leden telt de Tweede Kamer in Nederland?", answers: ["75", "100", "150", "200"], correct: 2 },
+            { type: "fill-in", category: "H1: Staatsinrichting", question: ["De macht die wetten maakt heet de ", " macht, terwijl de macht die de wetten uitvoert de ", " macht heet."], correct: ["wetgevende", "uitvoerende"], options: ["wetgevende", "uitvoerende", "rechterlijke", "controlerende"] },
+            { type: "mc", category: "H1: Staatsinrichting", question: "Wie is de voorzitter van de ministerraad?", answers: ["De Koning", "De Minister-President", "De voorzitter van de Tweede Kamer", "De oudste minister"], correct: 1 },
+            { type: "drag", category: "H1: Staatsinrichting", question: "Combineer de politieke stroming met de juiste kernwaarde.", items: ["Liberalisme", "Socialisme", "Confessionalisme", "Nationalisme"], targets: ["Vrijheid en eigen verantwoordelijkheid", "Gelijkheid en solidariteit", "Geloof en naastenliefde", "Liefde voor het eigen land"], correctMap: { "Liberalisme": "Vrijheid en eigen verantwoordelijkheid", "Socialisme": "Gelijkheid en solidariteit", "Confessionalisme": "Geloof en naastenliefde", "Nationalisme": "Liefde voor het eigen land" } },
+
+            // Mavo 4 - H2: Eerste Wereldoorlog
+            { type: "image", category: "H2: Eerste Wereldoorlog", question: "Welk verdrag, hier ondertekend, beëindigde de Eerste Wereldoorlog?", imageUrl: "https://placehold.co/600x400/55677E/FFFFFF?text=Verdrag", answers: ["Verdrag van Versailles", "Vrede van Münster", "Verdrag van Maastricht", "Akkoord van München"], correct: 0 },
+            { type: "drag", category: "H2: Eerste Wereldoorlog", question: "Combineer de leider met het juiste land tijdens WO1.", items: ["Keizer Wilhelm II", "Woodrow Wilson", "Tsaar Nicolaas II", "Georges Clemenceau"], targets: ["Duitsland", "Verenigde Staten", "Rusland", "Frankrijk"], correctMap: { "Keizer Wilhelm II": "Duitsland", "Woodrow Wilson": "Verenigde Staten", "Tsaar Nicolaas II": "Rusland", "Georges Clemenceau": "Frankrijk" } },
+            { type: "mc", category: "H2: Eerste Wereldoorlog", question: "Wat was de directe aanleiding van de Eerste Wereldoorlog?", answers: ["De moord op Franz Ferdinand", "De Duitse inval in België", "De Russische Revolutie", "Het zinken van de Lusitania"], correct: 0 },
+            { type: "mc", category: "H2: Eerste Wereldoorlog", question: "Welke positie nam Nederland in tijdens WO1?", answers: ["Neutraal", "Aan de kant van de Centralen", "Aan de kant van de Geallieerden", "Wisselend van kant"], correct: 0 },
+            { type: "odd-one-out", category: "H2: Eerste Wereldoorlog", question: "Welk wapen werd NIET grootschalig geïntroduceerd en gebruikt in de Eerste Wereldoorlog?", options: ["Gifgas", "Tank", "Vliegtuig", "Atoombom"], correct: 3 },
+            { type: "order", category: "H2: Eerste Wereldoorlog", question: "Zet deze gebeurtenissen van het Westfront in de juiste volgorde.", items: ["Begin van de loopgravenoorlog", "Slag aan de Somme", "Deelname van de VS aan de oorlog", "Wapenstilstand van Compiègne"], correctOrder: ["Begin van de loopgravenoorlog", "Slag aan de Somme", "Deelname van de VS aan de oorlog", "Wapenstilstand van Compiègne"] },
+
+            // Mavo 4 - H3: Interbellum
+            { type: "mc", category: "H3: Interbellum", question: "Wat was het 'Dawesplan'?", answers: ["Een plan voor de herbewapening van Duitsland", "Een lening van Amerika aan Duitsland om de economie te helpen", "Een plan om de Volkenbond op te richten", "Een aanvalsplan voor de invasie van Polen"], correct: 1 },
+            { type: "mc", category: "H3: Interbellum", question: "Welke gebeurtenis in 1929 wordt gezien als het begin van de wereldwijde economische crisis?", answers: ["De oprichting van de Sovjet-Unie", "De machtsovername van Mussolini", "De Beurskrach op Wall Street", "De publicatie van 'Mein Kampf'"], correct: 2 },
+            { type: "odd-one-out", category: "H3: Interbellum", question: "Welke leider hoort NIET in dit rijtje totalitaire leiders uit het Interbellum?", options: ["Mussolini", "Stalin", "Hitler", "Roosevelt"], correct: 3, bonus: true },
+            { type: "mc", category: "H3: Interbellum", question: "Wat was de belangrijkste zwakte van de Volkenbond?", answers: ["Ze hadden geen eigen leger", "Belangrijke landen zoals de VS waren geen lid", "Beslissingen moesten unaniem genomen worden", "Alle bovenstaande antwoorden zijn correct"], correct: 3 },
+
+            // Mavo 4 - H4: Tweede Wereldoorlog
+            { type: "order", category: "H4: Tweede Wereldoorlog", question: "Zet deze gebeurtenissen op de juiste tijdlijn (vroeg naar laat).", items: ["Inval van Polen", "Slag om Stalingrad", "D-Day", "Capitulatie van Japan"], correctOrder: ["Inval van Polen", "Slag om Stalingrad", "D-Day", "Capitulatie van Japan"], bonus: true },
+            { type: "mc", category: "H4: Tweede Wereldoorlog", question: "Wat was 'D-Day'?", answers: ["De dag dat Duitsland capituleerde", "De codenaam voor de geallieerde invasie in Normandië", "De dag van de aanval op Pearl Harbor", "De dag dat de atoombom op Hiroshima viel"], correct: 1 },
+            { type: "image", category: "H4: Tweede Wereldoorlog", question: "Deze propagandaposter werd gebruikt om vrouwen aan te moedigen in fabrieken te werken. Hoe heette deze iconische figuur?", imageUrl: "https://placehold.co/400x600/A88E6D/FFFFFF?text=Poster", answers: ["Wendy the Welder", "Rosie the Riveter", "Hannah the Helper", "Molly the Mechanic"], correct: 1 },
+            { type: "fill-in", category: "H4: Tweede Wereldoorlog", question: ["De systematische Jodenvervolging door de nazi's wordt de ", " genoemd. De nacht in 1938 waarin veel Joodse bezittingen werden vernield, heet de ", "."], correct: ["Holocaust", "Kristallnacht"], options: ["Holocaust", "Blitzkrieg", "Kristallnacht", "Endlösung"] },
+
+            // Mavo 4 - H5: Wereld na 1945
+            { type: "mc", category: "H5: Wereld na 1945", question: "Wat was het doel van de Marshallhulp?", answers: ["Militaire steun aan Azië", "Economische steun aan West-Europa voor de wederopbouw", "Een ruimtevaartprogramma starten", "De Berlijnse Muur bouwen"], correct: 1 },
+            { type: "drag", category: "H5: Wereld na 1945", question: "Combineer het begrip met de juiste omschrijving uit de periode na 1945.", items: ["Dekolonisatie", "Wederopbouw", "Babyboom", "Protestgeneratie"], targets: ["Het onafhankelijk worden van koloniën", "Het herstellen van de oorlogsschade", "Grote stijging van het geboortecijfer na de oorlog", "Jongeren die zich afzetten tegen de oudere generatie in de jaren '60"], correctMap: { "Dekolonisatie": "Het onafhankelijk worden van koloniën", "Wederopbouw": "Het herstellen van de oorlogsschade", "Babyboom": "Grote stijging van het geboortecijfer na de oorlog", "Protestgeneratie": "Jongeren die zich afzetten tegen de oudere generatie in de jaren '60" } },
+            { type: "mc", category: "H5: Wereld na 1945", question: "Welke organisatie werd opgericht om de vrede en veiligheid in de wereld te bewaren na WO2?", answers: ["De NAVO", "De Europese Unie", "De Verenigde Naties", "Het Warschaupact"], correct: 2 },
+
+            // Mavo 3 - H1: Nederlands-Indië
+            { type: "mc", category: "H1: Nederlands-Indië", question: "Wie riep de onafhankelijkheid van Indonesië uit in 1945?", answers: ["Soeharto", "Soekarno", "Hatta", "Sutan Sjahrir"], correct: 1 },
+            { type: "mc", category: "H1: Nederlands-Indië", question: "Wat waren de 'politionele acties'?", answers: ["Nederlandse militaire operaties om de controle in Indonesië te herstellen", "Hulpacties van de politie na een natuurramp", "Samenwerkingen tussen de Nederlandse en Indonesische politie", "Het uitroepen van de onafhankelijkheid"], correct: 0 },
+            { type: "mc", category: "H1: Nederlands-Indië", question: "In welk jaar erkende Nederland de onafhankelijkheid van Indonesië?", answers: ["1945", "1947", "1949", "1962"], correct: 2 },
+            { type: "order", category: "H1: Nederlands-Indië", question: "Zet deze gebeurtenissen in de juiste volgorde.", items: ["Japanse bezetting van Nederlands-Indië", "Soekarno roept de onafhankelijkheid uit", "Eerste politionele actie", "Soevereiniteitsoverdracht aan Indonesië"], correctOrder: ["Japanse bezetting van Nederlands-Indië", "Soekarno roept de onafhankelijkheid uit", "Eerste politionele actie", "Soevereiniteitsoverdracht aan Indonesië"], bonus: true },
+
+            // Mavo 3 - H2: Industrialisatie
+            { type: "odd-one-out", category: "H2: Industrialisatie", question: "Welke uitvinding hoort NIET bij de Eerste Industriële Revolutie?", options: ["Stoommachine", "Spinning Jenny", "Telefoon", "Stoomtrein"], correct: 2 },
+            { type: "mc", category: "H2: Industrialisatie", question: "Wat was een belangrijk gevolg van de industrialisatie voor de samenleving?", answers: ["Mensen verhuisden van de stad naar het platteland", "Er was minder kinderarbeid", "Er ontstond een nieuwe klasse van fabrieksarbeiders", "De meeste mensen werden boer"], correct: 2 },
+            { type: "mc", category: "H2: Industrialisatie", question: "Wat wordt bedoeld met de 'sociale kwestie'?", answers: ["De vraag hoe de winst verdeeld moest worden", "De discussie over de slechte werk- en leefomstandigheden van arbeiders", "Het probleem van de milieuvervuiling door fabrieken", "De strijd voor het vrouwenkiesrecht"], correct: 1 },
+
+            // Mavo 3 - H4: Nederland na 1945
+            { type: "mc", category: "H4: Nederland na 1945", question: "Wat wordt bedoeld met de 'wederopbouw'?", answers: ["Het herstellen van de schade na de Tweede Wereldoorlog", "De oprichting van de Europese Unie", "De bouw van de Deltawerken", "De onafhankelijkheid van Indonesië"], correct: 0 },
+            { type: "mc", category: "H4: Nederland na 1945", question: "Welke groep 'gastarbeiders' kwam in de jaren '60 en '70 in grote getalen naar Nederland?", answers: ["Polen en Roemenen", "Indonesiërs en Surinamers", "Turken en Marokkanen", "Duitsers en Belgen"], correct: 2 },
+            { type: "image", category: "H4: Nederland na 1945", question: "Dit enorme project moest een ramp zoals in 1953 voorkomen. Hoe heet dit project?", imageUrl: "https://placehold.co/600x400/5E7A7E/FFFFFF?text=Waterkering", answers: ["De Afsluitdijk", "De Zuiderzeewerken", "De Deltawerken", "De Maeslantkering"], correct: 2 },
+
+            // Mavo 3 - H5: Koude Oorlog
+            { type: "fill-in", category: "H5: Koude Oorlog", question: ["Het militaire bondgenootschap van de Sovjet-Unie en haar bondgenoten heette het ", "." ], correct: ["Warschaupact"], options: ["NAVO", "IJzeren Gordijn", "Warschaupact", "Asmogendheden"] },
+            { type: "drag", category: "H5: Koude Oorlog", question: "Combineer de gebeurtenis met de juiste beschrijving.", items: ["Cubacrisis", "Val van de Berlijnse Muur", "Marshallplan", "IJzeren Gordijn"], targets: ["Symbool voor het einde van de Koude Oorlog", "Conflict dat de wereld op de rand van een kernoorlog bracht", "Amerikaans hulpprogramma voor de wederopbouw van West-Europa", "De scheidingslijn tussen het communistische Oostblok en het kapitalistische Westen"], correctMap: { "Cubacrisis": "Conflict dat de wereld op de rand van een kernoorlog bracht", "Val van de Berlijnse Muur": "Symbool voor het einde van de Koude Oorlog", "Marshallplan": "Amerikaans hulpprogramma voor de wederopbouw van West-Europa", "IJzeren Gordijn": "De scheidingslijn tussen het communistische Oostblok en het kapitalistische Westen" }, bonus: true },
+
+            // Mavo 3 - H6: Israël-Palestina
+            { type: "mc", category: "H6: Israël-Palestina", question: "Wanneer werd de staat Israël officieel opgericht?", answers: ["1917", "1945", "1948", "1967"], correct: 2 },
+            { type: "order", category: "H6: Israël-Palestina", question: "Zet deze gebeurtenissen in de juiste chronologische volgorde.", items: ["Oprichting van de staat Israël", "Zesdaagse Oorlog", "Jom Kipoer-oorlog", "Oslo-akkoorden"], correctOrder: ["Oprichting van de staat Israël", "Zesdaagse Oorlog", "Jom Kipoer-oorlog", "Oslo-akkoorden"], bonus: true },
+            { type: "mc", category: "H6: Israël-Palestina", question: "Wat was de 'intifada'?", answers: ["Een vredesverdrag tussen Israël en Egypte", "Een Palestijnse opstand tegen de Israëlische bezetting", "De oprichting van een Palestijnse staat", "Een Israëlische militaire operatie"], correct: 1 },
+
+            // VWO 3 - H3: De Eerste Wereldoorlog
+            { type: "order", category: "H3: De Eerste Wereldoorlog", question: "Zet de aanleidingen voor WO1 in de juiste chronologische volgorde.", items: ["Moordaanslag in Sarajevo", "Oostenrijk-Hongarije verklaart Servië de oorlog", "Duitsland verklaart Rusland de oorlog", "Duitsland valt België binnen"], correctOrder: ["Moordaanslag in Sarajevo", "Oostenrijk-Hongarije verklaart Servië de oorlog", "Duitsland verklaart Rusland de oorlog", "Duitsland valt België binnen"] },
+            { type: "mc", category: "H3: De Eerste Wereldoorlog", question: "Welke twee bondgenootschappen stonden aan het begin van WO1 tegenover elkaar?", answers: ["De NAVO en het Warschaupact", "De Geallieerden en de Asmogendheden", "De Triple Entente en de Triple Alliantie", "De Volkenbond en de Verenigde Naties"], correct: 2 },
+            { type: "mc", category: "H3: De Eerste Wereldoorlog", question: "Wat was het 'Von Schlieffenplan'?", answers: ["Een plan om de Britse vloot te vernietigen", "Een Duits oorlogsplan voor een snelle overwinning op Frankrijk via België", "Een Oostenrijks plan om Servië binnen te vallen", "Een vredesvoorstel van de Paus"], correct: 1 },
+
+            // VWO 3 - H4: Rusland kleurt rood
+            { type: "mc", category: "H4: Rusland kleurt rood", question: "Wie was de leider van de bolsjewieken tijdens de Oktoberrevolutie?", answers: ["Stalin", "Lenin", "Trotski", "Tsaar Nicolaas II"], correct: 1 },
+            { type: "drag", category: "H4: Rusland kleurt rood", question: "Combineer de persoon met de juiste omschrijving in de Russische geschiedenis.", items: ["Lenin", "Stalin", "Tsaar Nicolaas II", "Trotski"], targets: ["Leider van de Bolsjewieken, eerste leider van de Sovjet-Unie", "Opvolger van Lenin, bekend om zijn totalitaire bewind", "De laatste tsaar van Rusland, afgezet tijdens de revolutie", "Belangrijke revolutionair, later verbannen en vermoord door Stalin"], correctMap: { "Lenin": "Leider van de Bolsjewieken, eerste leider van de Sovjet-Unie", "Stalin": "Opvolger van Lenin, bekend om zijn totalitaire bewind", "Tsaar Nicolaas II": "De laatste tsaar van Rusland, afgezet tijdens de revolutie", "Trotski": "Belangrijke revolutionair, later verbannen en vermoord door Stalin" } },
+            { type: "mc", category: "H4: Rusland kleurt rood", question: "Wat was de 'doema'?", answers: ["De geheime politie van de tsaar", "Een Russische boerengemeenschap", "Het Russische parlement, opgericht na de revolutie van 1905", "De adellijke klasse in Rusland"], correct: 2 },
+
+            // VWO 3 - H5: Het Interbellum
+            { type: "fill-in", category: "H5: Het Interbellum", question: ["De economische crisis die in 1929 begon in de VS, staat bekend als de ", "." ], correct: ["Grote Depressie"], options: ["Grote Depressie", "New Deal", "Kredietcrisis", "Beurskrach"] },
+            { type: "mc", category: "H5: Het Interbellum", question: "Wat hield het 'appeasementbeleid' van Groot-Brittannië in?", answers: ["Het direct militair ingrijpen tegen Hitler", "Het geven van economische steun aan Duitsland", "Het toegeven aan de eisen van Hitler om oorlog te vermijden", "Het oprichten van een bondgenootschap met de Sovjet-Unie"], correct: 2, bonus: true },
+            { type: "mc", category: "H5: Het Interbellum", question: "Welk land werd door Italië binnengevallen in 1935, wat de zwakte van de Volkenbond aantoonde?", answers: ["Ethiopië", "Griekenland", "Albanië", "Libië"], correct: 0 },
+
+            // VWO 3 - H6: De Tweede Wereldoorlog
+            { type: "odd-one-out", category: "H6: De Tweede Wereldoorlog", question: "Welk land behoorde NIET tot de Asmogendheden?", options: ["Duitsland", "Italië", "Japan", "Sovjet-Unie"], correct: 3, bonus: true },
+            { type: "mc", category: "H6: De Tweede Wereldoorlog", question: "Welke slag in de Sovjet-Unie wordt gezien als een belangrijk keerpunt in de Tweede Wereldoorlog?", answers: ["De Slag om Moskou", "De Slag om Stalingrad", "De Slag om Koersk", "De Slag om Leningrad"], correct: 1 },
+            { type: "drag", category: "H6: De Tweede Wereldoorlog", question: "Combineer de conferentie met de juiste uitkomst.", items: ["Conferentie van München", "Conferentie van Jalta", "Conferentie van Potsdam"], targets: ["Hitler mocht Sudetenland inlijven (appeasement)", "Verdeling van Duitsland en Europa na de oorlog besproken", "Ultimatum aan Japan gesteld en verdere afspraken over Duitsland gemaakt"], correctMap: { "Conferentie van München": "Hitler mocht Sudetenland inlijven (appeasement)", "Conferentie van Jalta": "Verdeling van Duitsland en Europa na de oorlog besproken", "Conferentie van Potsdam": "Ultimatum aan Japan gesteld en verdere afspraken over Duitsland gemaakt" } },
+
+            // VWO 3 - H7: De wereld onder hoogspanning, 1945-1991
+            { type: "mc", category: "H7: De wereld onder hoogspanning, 1945-1991", question: "Welke gebeurtenis wordt gezien als het symbolische einde van de Koude Oorlog?", answers: ["De Cubacrisis", "De Vietnamoorlog", "De val van de Berlijnse Muur", "De oprichting van de NAVO"], correct: 2 },
+            { type: "mc", category: "H7: De wereld onder hoogspanning, 1945-1991", question: "Wat was het doel van 'glasnost' en 'perestrojka' van Gorbatsjov?", answers: ["Het versterken van de communistische dictatuur", "Het hervormen van de Sovjet-Unie met meer openheid en economische vrijheid", "Het voorbereiden van een nieuwe wereldoorlog", "Het uitbreiden van het Warschaupact"], correct: 1 },
+            { type: "order", category: "H7: De wereld onder hoogspanning, 1945-1991", question: "Zet deze gebeurtenissen uit de Koude Oorlog in de juiste volgorde.", items: ["Blokkade van Berlijn", "Koreaanse Oorlog", "Cubacrisis", "Vietnamoorlog"], correctOrder: ["Blokkade van Berlijn", "Koreaanse Oorlog", "Cubacrisis", "Vietnamoorlog"] },
+
+            // Havo 3 - H3: De Eerste Wereldoorlog
+            { type: "mc", category: "H3: De Eerste Wereldoorlog", question: "Wat was de 'onbeperkte duikbootoorlog'?", answers: ["Duitse tactiek om alle schepen, ook van neutrale landen, aan te vallen", "Britse strategie om Duitse havens te blokkeren", "Een type duikboot dat oneindig onder water kon blijven", "Een afspraak om geen duikboten te gebruiken"], correct: 0 },
+            { type: "order", category: "H3: De Eerste Wereldoorlog", question: "Zet deze gebeurtenissen in de juiste volgorde.", items: ["Slag bij de Marne", "Begin van de loopgravenoorlog", "Deelname van de VS aan de oorlog", "Wapenstilstand"], correctOrder: ["Slag bij de Marne", "Begin van de loopgravenoorlog", "Deelname van de VS aan de oorlog", "Wapenstilstand"] },
+            { type: "mc", category: "H3: De Eerste Wereldoorlog", question: "Wat was het 'Zimmermanntelegram'?", answers: ["Een telegram waarin Duitsland de oorlog verklaarde aan de VS", "Een geheim Duits voorstel aan Mexico om de VS aan te vallen", "Een Brits telegram dat een Duitse aanval aankondigde", "Een vredesvoorstel van Zwitserland"], correct: 1 },
+
+            // Havo 3 - H4: Rusland wordt communistisch
+            { type: "odd-one-out", category: "H4: Rusland wordt communistisch", question: "Wie van de volgende personen speelde GEEN grote rol in de Russische Revolutie?", options: ["Lenin", "Stalin", "Trotski", "Churchill"], correct: 3 },
+            { type: "mc", category: "H4: Rusland wordt communistisch", question: "Wat was de 'Nieuwe Economische Politiek' (NEP) van Lenin?", answers: ["Volledige nationalisatie van alle bedrijven", "Een mix van staatskapitalisme en privé-initiatief", "Het afschaffen van geld", "Een plan voor wereldwijde revolutie"], correct: 1 },
+            { type: "mc", category: "H4: Rusland wordt communistisch", question: "De Bolsjewieken werden ook wel de ... genoemd.", answers: ["Roden", "Witten", "Groenen", "Zwarten"], correct: 0 },
+
+            // Havo 3 - H5: Tussen de wereldoorlogen
+            { type: "mc", category: "H5: Tussen de wereldoorlogen", question: "Welke ideologie was dominant in de Sovjet-Unie onder Stalin?", answers: ["Fascisme", "Nationaalsocialisme", "Communisme", "Liberalisme"], correct: 2 },
+            { type: "mc", category: "H5: Tussen de wereldoorlogen", question: "Wat gebeurde er tijdens de 'Nacht van de Lange Messen' in Duitsland?", answers: ["Een grote militaire parade", "De opening van het eerste concentratiekamp", "Hitler liet de leiding van de SA vermoorden", "De ondertekening van een verdrag met Italië"], correct: 2 },
+            { type: "image", category: "H5: Tussen de wereldoorlogen", question: "Deze Amerikaanse president introduceerde de 'New Deal' om de Grote Depressie te bestrijden. Wie was hij?", imageUrl: "https://placehold.co/400x400/6E6E6E/FFFFFF?text=President", answers: ["Herbert Hoover", "Franklin D. Roosevelt", "Harry S. Truman", "Theodore Roosevelt"], correct: 1, bonus: true },
+
+            // Havo 3 - H6: De Tweede Wereldoorlog
+            { type: "image", category: "H6: De Tweede Wereldoorlog", question: "Deze aanval op een Amerikaanse vlootbasis was de reden voor de VS om deel te nemen aan WO2. Welke aanval was dit?", imageUrl: "https://placehold.co/600x400/787A5E/FFFFFF?text=Vlootbasis", answers: ["D-Day", "Slag om Midway", "Aanval op Pearl Harbor", "Slag om Engeland"], correct: 2, bonus: true },
+            { type: "order", category: "H6: De Tweede Wereldoorlog", question: "Zet deze gebeurtenissen van WO2 in de juiste volgorde.", items: ["Slag om Engeland", "Operatie Barbarossa", "Aanval op Pearl Harbor", "Atoombom op Hiroshima"], correctOrder: ["Slag om Engeland", "Operatie Barbarossa", "Aanval op Pearl Harbor", "Atoombom op Hiroshima"], bonus: true },
+            { type: "mc", category: "H6: De Tweede Wereldoorlog", question: "In welke stad vond het bombardement plaats dat leidde tot de capitulatie van Nederland?", answers: ["Amsterdam", "Den Haag", "Rotterdam", "Utrecht"], correct: 2 },
+
+            // Havo 3 - H7: De Koude Oorlog
+            { type: "fill-in", category: "H7: De Koude Oorlog", question: ["De twee belangrijkste militaire bondgenootschappen tijdens de Koude Oorlog waren de ", " in het westen en het ", " in het oosten."], correct: ["NAVO", "Warschaupact"], options: ["NAVO", "Warschaupact", "Verenigde Naties", "Asmogendheden"], bonus: true},
+            { type: "drag", category: "H7: De Koude Oorlog", question: "Combineer de term met de juiste Koude Oorlog-omschrijving.", items: ["Containmentpolitiek", "Blokkade van Berlijn", "Ruimtewedloop", "Domino-theorie"], targets: ["Amerikaanse strategie om communisme in te dammen", "Poging van Sovjet-Unie om West-Berlijn te isoleren", "Competitie tussen VS en SU voor dominantie in de ruimte", "Het idee dat als één land communistisch wordt, buurlanden volgen"], correctMap: { "Containmentpolitiek": "Amerikaanse strategie om communisme in te dammen", "Blokkade van Berlijn": "Poging van Sovjet-Unie om West-Berlijn te isoleren", "Ruimtewedloop": "Competitie tussen VS en SU voor dominantie in de ruimte", "Domino-theorie": "Het idee dat als één land communistisch wordt, buurlanden volgen" } },
+            { type: "mc", category: "H7: De Koude Oorlog", question: "Wat was de 'Praagse Lente' in 1968?", answers: ["Een festival in Praag om de lente te vieren", "Een opstand in Tsjecho-Slowakije die door de Sovjet-Unie werd neergeslagen", "Een vredesoverleg tussen de VS en de Sovjet-Unie", "De bouw van een muur rondom Praag"], correct: 1 }
+        ];
+
+        // --- HULPFUNCTIES ---
+        const $ = (selector) => document.getElementById(selector);
+        const shuffleArray = (arr) => [...arr].sort(() => Math.random() - 0.5);
+        
+        // --- LOBBY FUNCTIES ---
+        const renderTopics = () => {
+            const grid = $('topicGrid');
+            if (!grid) return;
+            grid.innerHTML = '';
+            (topicsByYear[currentYear] || []).forEach(topic => {
+                grid.innerHTML += `<label class="topic-chip"><input type="checkbox" data-topic="${topic}" onchange="this.parentElement.classList.toggle('active')"><span>${topic}</span></label>`;
+            });
+        };
+        const changeYear = (y) => {
+            currentYear = y;
+            document.querySelectorAll('#yearSelector .topic-chip').forEach(lbl => lbl.classList.remove('active'));
+            document.querySelector(`#yearSelector input[value="${y}"]`).closest('.topic-chip').classList.add('active');
+            renderTopics();
+        };
+        const selectIcon = (num, icon, btn) => {
+            $(`player${num}Icon`).textContent = icon;
+            btn.parentElement.querySelectorAll('.icon-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+        };
+        const setPlayerCount = (count, btn) => {
+            playerCount = count;
+            document.querySelectorAll('.count-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            document.querySelectorAll('.player-card').forEach((card, i) => card.classList.toggle('inactive', i >= count));
+        };
+
+        // --- SPEL LOGICA ---
+        const startGame = () => {
+            // Player name validation
+            for (let i = 1; i <= playerCount; i++) {
+                if (!$(`player${i}Name`).value.trim()) {
+                    showModal(`Vul een naam in voor Speler ${i}.`, 2500);
+                    return;
+                }
+            }
+            const selectedTopics = [...document.querySelectorAll('#topicGrid input:checked')].map(cb => cb.dataset.topic);
+            
+            if (selectedTopics.length === 0) {
+                showModal("Selecteer tenminste één onderwerp om te starten!", 2500);
+                return; 
+            }
+
+            let tempQuestions = questions.filter(q => selectedTopics.includes(q.category));
+            
+            if (tempQuestions.length === 0) {
+                showModal("Er zijn geen vragen gevonden voor de geselecteerde onderwerpen.", 3000);
+                return;
+            }
+
+            gameQuestions = [];
+            const totalQuestionsNeeded = playerCount * questionsPerPlayer;
+            while(gameQuestions.length < totalQuestionsNeeded && tempQuestions.length > 0) {
+                gameQuestions.push(...shuffleArray(tempQuestions));
+            }
+            gameQuestions = gameQuestions.slice(0, totalQuestionsNeeded);
+
+            players = {}; playerOrder = [];
+            for (let i = 1; i <= playerCount; i++) {
+                const name = $(`player${i}Name`).value.trim();
+                players[`player${i}`] = { name, score: 0, correct: 0, incorrect: 0 };
+                playerOrder.push(`player${i}`);
+            }
+            $('lobbyScreen').classList.remove('active');
+            $('gameScreen').classList.add('active');
+            $('scoreboard').innerHTML = playerOrder.map(id => `<div class="score-card" id="score-${id}"><h4>${players[id].name}</h4><div class="score">0</div></div>`).join('');
+            currentPlayerIndex = 0; currentQuestionIndex = 0; roundsCompleted = 0;
+            showQuestion();
+        };
+
+        const showQuestion = async () => {
+            if (roundsCompleted >= questionsPerPlayer || currentQuestionIndex >= gameQuestions.length) { 
+                endGame(); 
+                return; 
+            }
+            const question = gameQuestions[currentQuestionIndex];
+            if (question.bonus) await showModal('🌟 Dubbele Punten! 🌟', 2000);
+            renderQuestionUI(question);
+            startTimer();
+        };
+        
+        const renderQuestionUI = (q) => {
+            const currentPlayerId = playerOrder[currentPlayerIndex];
+            const playerNumber = parseInt(currentPlayerId.replace('player', ''));
+
+            $('currentPlayer').textContent = `🎮 ${players[currentPlayerId].name} is aan de beurt!`;
+            
+            $('currentPlayer').className = 'current-player';
+            document.querySelectorAll('.score-card').forEach(c => {
+                c.classList.remove('current', 'player-1', 'player-2', 'player-3', 'player-4');
+            });
+            
+            $('currentPlayer').classList.add(`player-${playerNumber}`);
+            const currentScoreCard = $(`score-${currentPlayerId}`);
+            currentScoreCard.classList.add('current', `player-${playerNumber}`);
+
+
+            $('categoryBadge').textContent = q.category;
+            $('questionNumber').textContent = `Ronde ${roundsCompleted + 1}/${questionsPerPlayer}`;
+            
+             if (q.type === 'fill-in') {
+                $('questionText').textContent = q.question.join('...');
+            } else {
+                $('questionText').textContent = q.question;
+            }
+
+            ['answersGrid', 'dragDropContainer', 'orderContainer', 'fillInContainer', 'fillInOptions', 'questionImageContainer', 'checkAnswerBtn'].forEach(id => $(id).style.display = 'none');
+            [$('answersGrid'), $('dragItems'), $('dropTargets'), $('orderContainer'), $('fillInContainer'), $('fillInOptions'), $('questionImageContainer')].forEach(el => el.innerHTML = '');
+
+            const questionRenderers = {
+                'mc': renderMultipleChoice, 'odd-one-out': renderMultipleChoice, 'image': renderImageQuestion,
+                'drag': renderDragDrop, 'order': renderOrder, 'fill-in': renderFillIn
+            };
+            questionRenderers[q.type]?.(q);
+        };
+        
+        const renderMultipleChoice = (q) => {
+            $('answersGrid').style.display = 'grid';
+            const options = q.answers || q.options;
+            const items = shuffleArray([...options.map((opt, i) => ({ text: opt, isCorrect: i === q.correct }))]);
+            $('answersGrid').innerHTML = items.map(item => `<button class="answer-btn">${item.text}</button>`).join('');
+            $('answersGrid').querySelectorAll('.answer-btn').forEach((btn, i) => btn.onclick = () => checkAnswer(items[i].isCorrect, btn));
+        };
+
+        const renderImageQuestion = (q) => {
+            $('questionImageContainer').style.display = 'block';
+            $('questionImageContainer').innerHTML = `<img src="${q.imageUrl}" alt="Vraag afbeelding">`;
+            renderMultipleChoice(q);
+        };
+
+        const renderDragDrop = (q) => {
+            $('dragDropContainer').style.display = 'flex';
+            $('checkAnswerBtn').style.display = 'block';
+            $('checkAnswerBtn').onclick = () => checkDragDropAnswer(q);
+            $('dragItems').innerHTML = shuffleArray([...q.items]).map(item => `<div class="drag-item" draggable="true">${item}</div>`).join('');
+            $('dropTargets').innerHTML = shuffleArray([...q.targets]).map(target => `<div class="drop-target" data-text="${target}"><span class="drop-target-label">${target}</span></div>`).join('');
+            setupDragListeners();
+        };
+
+        const renderOrder = (q) => {
+            $('orderContainer').style.display = 'flex';
+            $('checkAnswerBtn').style.display = 'block';
+            $('checkAnswerBtn').onclick = () => checkOrderAnswer(q);
+            $('orderContainer').innerHTML = shuffleArray([...q.items]).map(item => `<div class="order-item" draggable="true">${item}</div>`).join('');
+            setupOrderListeners();
+        };
+
+        const renderFillIn = (q) => {
+            $('fillInContainer').style.display = 'block';
+            $('fillInOptions').style.display = 'flex';
+            $('checkAnswerBtn').style.display = 'block';
+            $('checkAnswerBtn').onclick = () => checkFillInAnswer(q);
+
+            let html = '';
+            q.question.forEach((part, i) => {
+                html += `<span>${part}</span>`;
+                if (i < q.correct.length) {
+                    html += `<div class="fill-in-blank drop-target"></div>`;
+                }
+            });
+            $('fillInContainer').innerHTML = html;
+            $('fillInOptions').innerHTML = shuffleArray([...q.options]).map(opt => `<div class="drag-item" draggable="true">${opt}</div>`).join('');
+            setupDragListeners();
+        };
+
+        const checkAnswer = (isCorrect, btn) => {
+            clearInterval(timer);
+            const question = gameQuestions[currentQuestionIndex];
+            const currentPlayer = players[playerOrder[currentPlayerIndex]];
+            document.querySelectorAll('.answer-btn').forEach(b => b.disabled = true);
+            
+            if(isCorrect) {
+                btn.classList.add('correct');
+                currentPlayer.score += question.bonus ? 20 : 10;
+                currentPlayer.correct++;
+            } else {
+                btn.classList.add('incorrect');
+                currentPlayer.incorrect++;
+                const correctText = question.answers ? question.answers[question.correct] : question.options[question.correct];
+                document.querySelectorAll('.answer-btn').forEach(b => {
+                    if(b.textContent === correctText) b.classList.add('correct');
+                });
+            }
+            updateScoreDisplay();
+            setTimeout(nextQuestion, 2000);
+        };
+
+        const checkComplexAnswer = (q, isCorrect) => {
+            clearInterval(timer);
+            const currentPlayer = players[playerOrder[currentPlayerIndex]];
+            
+            if(isCorrect) {
+                currentPlayer.score += q.bonus ? 20 : 10;
+                currentPlayer.correct++;
+            } else {
+                currentPlayer.incorrect++;
+            }
+            
+            $('checkAnswerBtn').style.display = 'none';
+            updateScoreDisplay();
+            setTimeout(nextQuestion, 3000);
+        };
+        
+        const checkFillInAnswer = (q) => {
+            let correctCount = 0;
+            const blanks = $('fillInContainer').querySelectorAll('.fill-in-blank');
+            blanks.forEach((blank, i) => {
+                const item = blank.querySelector('.drag-item');
+                if (item && item.textContent === q.correct[i]) {
+                    item.style.background = '#4caf50';
+                    correctCount++;
+                } else if (item) {
+                    item.style.background = '#f44336';
+                }
+            });
+            checkComplexAnswer(q, correctCount === q.correct.length);
+        };
+
+        const checkDragDropAnswer = (q) => {
+            let correctCount = 0;
+            $('dropTargets').querySelectorAll('.drop-target').forEach(t => {
+                const item = t.querySelector('.drag-item');
+                if (item && q.correctMap[item.textContent] === t.dataset.text) {
+                    item.style.background = '#4caf50';
+                    correctCount++;
+                } else if (item) {
+                    item.style.background = '#f44336';
+                }
+            });
+            checkComplexAnswer(q, correctCount === Object.keys(q.correctMap).length);
+        };
+
+        const checkOrderAnswer = (q) => {
+            const items = [...$('orderContainer').querySelectorAll('.order-item')];
+            const userOrder = items.map(i => i.textContent);
+            let isCorrect = true;
+            userOrder.forEach((text, i) => {
+                if (text === q.correctOrder[i]) {
+                    items[i].style.background = '#4caf50';
+                } else {
+                    items[i].style.background = '#f44336';
+                    isCorrect = false;
+                }
+            });
+            checkComplexAnswer(q, isCorrect);
+        };
+
+        const startTimer = () => {
+            const question = gameQuestions[currentQuestionIndex];
+            const complexTypes = ['order', 'drag', 'fill-in'];
+            timeLeft = complexTypes.includes(question.type) ? 30 : 15;
+            updateTimerDisplay();
+            clearInterval(timer);
+            timer = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                if (timeLeft <= 0) timeUp();
+            }, 1000);
+        };
+
+        const timeUp = () => {
+            clearInterval(timer);
+            players[playerOrder[currentPlayerIndex]].incorrect++;
+            document.querySelectorAll('.answer-btn, .drag-item, .order-item').forEach(el => el.disabled = true);
+            $('checkAnswerBtn').style.display = 'none';
+            showModal("⏰ Tijd is om! ⏰", 2000).then(nextQuestion);
+        };
+
+        const updateTimerDisplay = () => {
+            const el = $('timer');
+            el.textContent = `⏱️ ${timeLeft}`;
+            el.style.color = timeLeft <= 5 ? '#ff6b6b' : 'white';
+        };
+
+        const updateScoreDisplay = () => {
+            playerOrder.forEach(id => {
+                $(`score-${id}`).querySelector('.score').textContent = players[id].score;
+            });
+        };
+
+        const nextQuestion = () => {
+            currentPlayerIndex = (currentPlayerIndex + 1) % playerCount;
+            if (currentPlayerIndex === 0) roundsCompleted++;
+            currentQuestionIndex++;
+            showQuestion();
+        };
+
+        const endGame = () => {
+            clearInterval(timer);
+            $('gameScreen').classList.remove('active');
+            $('resultsScreen').classList.add('active');
+            
+            const sortedPlayers = Object.entries(players).sort(([,a], [,b]) => b.score - a.score);
+            const winner = sortedPlayers[0][1];
+            const isTie = sortedPlayers.length > 1 && sortedPlayers[0][1].score === sortedPlayers[1][1].score;
+            
+            if (isTie) {
+                const tiedNames = sortedPlayers.filter(p => p[1].score === winner.score).map(p => p[1].name).join(' en ');
+                $('winnerAnnouncement').textContent = `🤝 Gelijkspel tussen ${tiedNames}! 🤝`;
+            } else {
+                $('winnerAnnouncement').textContent = `🎉 ${winner.name} heeft gewonnen! 🎉`;
+            }
+
+            $('podium').innerHTML = sortedPlayers.map(([id, player], i) => {
+                const places = ['first', 'second', 'third'];
+                const trophies = ['🏆', '🥈', '🥉'];
+                const placeClass = i < 3 ? places[i] : 'other';
+                const trophy = i < 3 ? trophies[i] : '🏅';
+                const placeText = `${i+1}e`;
+                return `<div class="podium-place ${placeClass}">
+                    <div class="trophy">${trophy}</div>
+                    <div class="place-number">${placeText}</div>
+                    <div class="place-name">${player.name}</div>
+                    <div class="place-score">${player.score} pts</div>
+                </div>`;
+            }).join('');
+
+            $('statsGrid').innerHTML = sortedPlayers.map(([id, p]) => {
+                const total = p.correct + p.incorrect;
+                const percentage = total > 0 ? Math.round((p.correct / total) * 100) : 0;
+                return `<div class="stat-card">
+                    <h5>${p.name}</h5>
+                    <p>✅ Correct: ${p.correct}</p><p>❌ Fout: ${p.incorrect}</p>
+                    <p>📊 Percentage: ${percentage}%</p>
+                </div>`;
+            }).join('');
+        };
+        
+        const resetGame = () => {
+            $('resultsScreen').classList.remove('active');
+            $('lobbyScreen').classList.add('active');
+            for (let i = 1; i <= 4; i++) $(`player${i}Name`).value = '';
+            setPlayerCount(2, document.querySelector('.count-btn'));
+            changeYear('Mavo 3');
+        };
+
+        const showModal = (text, duration) => {
+            return new Promise(resolve => {
+                $('modalText').textContent = text;
+                $('modal').style.display = 'flex';
+                setTimeout(() => {
+                    $('modal').style.display = 'none';
+                    resolve();
+                }, duration);
+            });
+        };
+        
+        // --- DRAG & DROP LISTENERS ---
+        const setupDragListeners = () => {
+            document.querySelectorAll('.drag-item').forEach(i => {
+                i.addEventListener('dragstart', (e) => { e.target.classList.add('dragging'); e.dataTransfer.setData('text/plain', e.target.textContent); });
+                i.addEventListener('dragend', (e) => e.target.classList.remove('dragging'));
+            });
+            document.querySelectorAll('.drop-target').forEach(t => {
+                t.addEventListener('dragover', (e) => { e.preventDefault(); e.currentTarget.classList.add('over'); });
+                t.addEventListener('dragleave', (e) => e.currentTarget.classList.remove('over'));
+                t.addEventListener('drop', (e) => {
+                    e.preventDefault(); e.currentTarget.classList.remove('over');
+                    const text = e.dataTransfer.getData('text/plain');
+                    const source = [...document.querySelectorAll('.drag-item')].find(i => i.textContent === text);
+                    
+                    if (source) {
+                        const existingItem = e.currentTarget.querySelector('.drag-item');
+                        const sourceParent = source.parentElement;
+                        if (existingItem) sourceParent.appendChild(existingItem);
+                        if (!e.currentTarget.hasChildNodes() || existingItem) e.currentTarget.appendChild(source);
+                    }
+                });
+            });
+        };
+        
+        const setupOrderListeners = () => {
+            const container = $('orderContainer');
+            document.querySelectorAll('.order-item').forEach(i => {
+                i.addEventListener('dragstart', () => draggedItem = i);
+                i.addEventListener('dragend', () => draggedItem = null);
+            });
+            container.addEventListener('dragover', e => {
+                e.preventDefault();
+                const afterElement = [...container.querySelectorAll('.order-item:not(.dragging)')].reduce((closest, child) => {
+                    const box = child.getBoundingClientRect();
+                    const offset = e.clientY - box.top - box.height / 2;
+                    return (offset < 0 && offset > closest.offset) ? { offset, element: child } : closest;
+                }, { offset: Number.NEGATIVE_INFINITY }).element;
+                
+                if (afterElement == null) container.appendChild(draggedItem);
+                else container.insertBefore(draggedItem, afterElement);
+            });
+        };
+
+        // --- INIT ---
+        window.onload = () => {
+            renderTopics();
+            document.addEventListener('keydown', e => {
+                if (e.key === 'Enter' && $('lobbyScreen').classList.contains('active')) {
+                    startGame();
+                }
+            });
+        };
+    </script>
+</body>
+</html>
+
+
+
