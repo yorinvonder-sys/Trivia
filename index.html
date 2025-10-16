@@ -285,11 +285,17 @@
             { type: "mc", category: "H1: Nederlands-Indië", question: "Wat betekent 'Bersiap'?", answers: ["'Wees paraat', een periode van geweld na de Japanse capitulatie", "Een Indisch gerecht", "De naam van een Nederlandse generaal", "Een vredesonderhandeling"], correct: 0 },
             { type: "drag", category: "H1: Nederlands-Indië", question: "Combineer de groep met de juiste omschrijving na de onafhankelijkheid.", items: ["Molukkers (KNIL-militairen)", "Indische Nederlanders", "Papoea's"], targets: ["Kwamen naar Nederland in 1951 met de belofte van een eigen staat", "Mensen van gemengde afkomst die naar Nederland migreerden", "Bleven onder Nederlands bestuur tot 1962"], correctMap: { "Molukkers (KNIL-militairen)": "Kwamen naar Nederland in 1951 met de belofte van een eigen staat", "Indische Nederlanders": "Mensen van gemengde afkomst die naar Nederland migreerden", "Papoea's": "Bleven onder Nederlands bestuur tot 1962" } },
             { type: "mc", category: "H1: Nederlands-Indië", question: "Waarom was de Japanse bezetting belangrijk voor het Indonesische nationalisme?", answers: ["De Japanners gaven direct onafhankelijkheid", "Het liet zien dat een Aziatisch land Europeanen kon verslaan", "De Japanners onderdrukten het nationalisme volledig", "Nederland en Japan werkten samen"], correct: 1 },
-
+            
             // Mavo 3 - H2: Industrialisatie
             { type: "odd-one-out", category: "H2: Industrialisatie", question: "Welke uitvinding hoort NIET bij de Eerste Industriële Revolutie?", options: ["Stoommachine", "Spinning Jenny", "Telefoon", "Stoomtrein"], correct: 2 },
             { type: "mc", category: "H2: Industrialisatie", question: "Wat was een belangrijk gevolg van de industrialisatie voor de samenleving?", answers: ["Mensen verhuisden van de stad naar het platteland", "Er was minder kinderarbeid", "Er ontstond een nieuwe klasse van fabrieksarbeiders", "De meeste mensen werden boer"], correct: 2 },
             { type: "mc", category: "H2: Industrialisatie", question: "Wat wordt bedoeld met de 'sociale kwestie'?", answers: ["De vraag hoe de winst verdeeld moest worden", "De discussie over de slechte werk- en leefomstandigheden van arbeiders", "Het probleem van de milieuvervuiling door fabrieken", "De strijd voor het vrouwenkiesrecht"], correct: 1 },
+            { type: "mc", category: "H2: Industrialisatie", question: "Welke koning speelde een belangrijke rol in de vroege industrialisatie van Nederland door o.a. kanalen en wegen aan te leggen?", answers: ["Koning Willem I", "Koning Willem II", "Koning Willem III", "Koning Lodewijk Napoleon"], correct: 0 },
+            { type: "order", category: "H2: Industrialisatie", question: "Zet deze sociale wetten in de juiste chronologische volgorde.", items: ["Kinderwetje van Van Houten", "Leerplichtwet", "8-urige werkdag en 45-urige werkweek"], correctOrder: ["Kinderwetje van Van Houten", "Leerplichtwet", "8-urige werkdag en 45-urige werkweek"] },
+            { type: "fill-in", category: "H2: Industrialisatie", question: ["De eerste sociale wet in Nederland was het 'Kinderwetje van ", "', dat kinderarbeid onder de 12 jaar verbood. Later zorgde de ", " ervoor dat alle kinderen naar school moesten."], correct: ["Van Houten", "Leerplichtwet"], options: ["Schaepman", "Van Houten", "Grondwet", "Leerplichtwet"] },
+            { type: "mc", category: "H2: Industrialisatie", question: "Welke politieke stroming kwam vooral op voor de rechten van arbeiders?", answers: ["Liberalisme", "Confessionalisme", "Socialisme", "Nationalisme"], correct: 2 },
+            { type: "drag", category: "H2: Industrialisatie", question: "Combineer de groep met hun belang tijdens de industrialisatie.", items: ["Fabrikanten", "Arbeiders", "Liberalen", "Socialisten"], targets: ["Wilde zoveel mogelijk winst maken", "Streefden naar betere lonen en werkomstandigheden", "Vonden dat de overheid zich niet te veel met de economie moest bemoeien", "Wilden dat de overheid ingreep om de zwakkeren te beschermen"], correctMap: { "Fabrikanten": "Wilde zoveel mogelijk winst maken", "Arbeiders": "Streefden naar betere lonen en werkomstandigheden", "Liberalen": "Vonden dat de overheid zich niet te veel met de economie moest bemoeien", "Socialisten": "Wilden dat de overheid ingreep om de zwakkeren te beschermen" } },
+
 
             // Mavo 3 - H4: Nederland na 1945
             { type: "mc", category: "H4: Nederland na 1945", question: "Wat wordt bedoeld met de 'wederopbouw'?", answers: ["Het herstellen van de schade na de Tweede Wereldoorlog", "De oprichting van de Europese Unie", "De bouw van de Deltawerken", "De onafhankelijkheid van Indonesië"], correct: 0 },
@@ -623,7 +629,10 @@
         const timeUp = () => {
             clearInterval(timer);
             players[playerOrder[currentPlayerIndex]].incorrect++;
-            document.querySelectorAll('.answer-btn, .drag-item, .order-item').forEach(el => el.disabled = true);
+            document.querySelectorAll('.answer-btn, .drag-item, .order-item').forEach(el => {
+                el.draggable = false;
+                el.style.cursor = 'not-allowed';
+            });
             $('checkAnswerBtn').style.display = 'none';
             showModal("⏰ Tijd is om! ⏰", 2000).then(nextQuestion);
         };
@@ -707,46 +716,121 @@
             });
         };
         
-        // --- DRAG & DROP LISTENERS ---
+        // --- DRAG & DROP LISTENERS (met touch support) ---
         const setupDragListeners = () => {
-            document.querySelectorAll('.drag-item').forEach(i => {
-                i.addEventListener('dragstart', (e) => { e.target.classList.add('dragging'); e.dataTransfer.setData('text/plain', e.target.textContent); });
-                i.addEventListener('dragend', (e) => e.target.classList.remove('dragging'));
+            document.querySelectorAll('.drag-item').forEach(item => {
+                // Mouse events
+                item.addEventListener('dragstart', e => {
+                    e.target.classList.add('dragging');
+                    e.dataTransfer.setData('text/plain', e.target.textContent);
+                });
+                item.addEventListener('dragend', e => e.target.classList.remove('dragging'));
+                // Touch events
+                item.addEventListener('touchstart', e => {
+                    draggedItem = e.target;
+                    draggedItem.classList.add('dragging');
+                }, {passive: false});
             });
-            document.querySelectorAll('.drop-target').forEach(t => {
-                t.addEventListener('dragover', (e) => { e.preventDefault(); e.currentTarget.classList.add('over'); });
-                t.addEventListener('dragleave', (e) => e.currentTarget.classList.remove('over'));
-                t.addEventListener('drop', (e) => {
-                    e.preventDefault(); e.currentTarget.classList.remove('over');
+
+            document.querySelectorAll('.drop-target').forEach(target => {
+                // Mouse events
+                target.addEventListener('dragover', e => { e.preventDefault(); e.currentTarget.classList.add('over'); });
+                target.addEventListener('dragleave', e => e.currentTarget.classList.remove('over'));
+                target.addEventListener('drop', e => {
+                    e.preventDefault();
+                    e.currentTarget.classList.remove('over');
                     const text = e.dataTransfer.getData('text/plain');
                     const source = [...document.querySelectorAll('.drag-item')].find(i => i.textContent === text);
-                    
-                    if (source) {
-                        const existingItem = e.currentTarget.querySelector('.drag-item');
-                        const sourceParent = source.parentElement;
-                        if (existingItem) sourceParent.appendChild(existingItem);
-                        if (!e.currentTarget.hasChildNodes() || existingItem) e.currentTarget.appendChild(source);
-                    }
+                    handleDrop(source, e.currentTarget);
                 });
             });
+
+            document.addEventListener('touchmove', e => {
+                if (!draggedItem) return;
+                e.preventDefault();
+                const touch = e.touches[0];
+                const elementUnder = document.elementFromPoint(touch.clientX, touch.clientY);
+                const dropTarget = elementUnder ? elementUnder.closest('.drop-target') : null;
+                
+                document.querySelectorAll('.drop-target').forEach(t => t.classList.remove('over'));
+                if (dropTarget) dropTarget.classList.add('over');
+
+            }, {passive: false});
+            
+            document.addEventListener('touchend', e => {
+                if (!draggedItem) return;
+                draggedItem.classList.remove('dragging');
+                const touch = e.changedTouches[0];
+                const elementUnder = document.elementFromPoint(touch.clientX, touch.clientY);
+                const dropTarget = elementUnder ? elementUnder.closest('.drop-target') : null;
+                
+                if (dropTarget) {
+                    handleDrop(draggedItem, dropTarget);
+                    dropTarget.classList.remove('over');
+                }
+                draggedItem = null;
+            });
+
+            const handleDrop = (source, target) => {
+                if (source && target) {
+                    const existingItem = target.querySelector('.drag-item');
+                    const sourceParent = source.parentElement;
+                    if (existingItem) sourceParent.appendChild(existingItem);
+                    target.appendChild(source);
+                }
+            }
         };
         
         const setupOrderListeners = () => {
             const container = $('orderContainer');
-            document.querySelectorAll('.order-item').forEach(i => {
-                i.addEventListener('dragstart', () => draggedItem = i);
-                i.addEventListener('dragend', () => draggedItem = null);
-            });
-            container.addEventListener('dragover', e => {
-                e.preventDefault();
+            if (!container) return;
+            
+            const handleMove = (y) => {
+                if (!draggedItem) return;
                 const afterElement = [...container.querySelectorAll('.order-item:not(.dragging)')].reduce((closest, child) => {
                     const box = child.getBoundingClientRect();
-                    const offset = e.clientY - box.top - box.height / 2;
+                    const offset = y - box.top - box.height / 2;
                     return (offset < 0 && offset > closest.offset) ? { offset, element: child } : closest;
                 }, { offset: Number.NEGATIVE_INFINITY }).element;
                 
                 if (afterElement == null) container.appendChild(draggedItem);
                 else container.insertBefore(draggedItem, afterElement);
+            };
+
+            container.querySelectorAll('.order-item').forEach(item => {
+                // Mouse events
+                item.addEventListener('dragstart', () => {
+                    draggedItem = item;
+                    item.classList.add('dragging');
+                });
+                item.addEventListener('dragend', () => {
+                    item.classList.remove('dragging');
+                    draggedItem = null;
+                });
+                // Touch events
+                item.addEventListener('touchstart', e => {
+                    draggedItem = item;
+                    item.classList.add('dragging');
+                }, {passive: false});
+            });
+            
+            // Mouse event
+            container.addEventListener('dragover', e => {
+                e.preventDefault();
+                handleMove(e.clientY);
+            });
+            
+            // Touch events
+            container.addEventListener('touchmove', e => {
+                e.preventDefault();
+                handleMove(e.touches[0].clientY);
+            }, {passive: false});
+            
+            document.addEventListener('touchend', () => {
+                if (draggedItem) {
+                    draggedItem.classList.remove('dragging');
+                    draggedItem = null;
+                }
             });
         };
 
